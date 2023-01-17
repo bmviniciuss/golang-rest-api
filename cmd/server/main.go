@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/bmviniciuss/golang-rest-api/internal/comment"
 	"github.com/bmviniciuss/golang-rest-api/internal/db"
 )
 
@@ -16,10 +17,35 @@ func Run() error {
 		return err
 	}
 
-	if err := db.Ping(context.Background()); err != nil {
+	if err := db.MigrateDB(); err != nil {
+		fmt.Println("Failed to migrate database", err)
 		return err
 	}
+
 	fmt.Println("Connected to database successfully! :D")
+
+	cmtService := comment.NewService(db)
+
+	p, err := cmtService.CreateComment(context.Background(), comment.Comment{
+		Slug:   "test",
+		Body:   "test",
+		Author: "Vinicius Barbosa",
+	})
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Comment created: ", p)
+
+	cmt, err := cmtService.GetComment(context.Background(), p.ID)
+
+	if err != nil {
+		fmt.Println("Failed to get comment", err)
+		return err
+	}
+
+	fmt.Println("Comment: ", cmt)
 
 	return nil
 }
